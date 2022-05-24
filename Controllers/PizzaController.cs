@@ -8,22 +8,24 @@ namespace ContosoPizza.Controllers;
 [Route("[controller]")]
 public class PizzaController : ControllerBase
 {
-    public PizzaController()
+    PizzaService _service;
+    
+    public PizzaController( PizzaService service)
     {
+        _service = service;
     }
 
     // GET all action
     [HttpGet]
-    public ActionResult<List<Pizza>> GetAll() =>
-    PizzaService.GetAll();
+    public IEnumerable<Pizza> GetAll() => _service.GetAll();
 
     // GET by Id action
     [HttpGet("{id}")]
     public ActionResult<Pizza> Get(int id)
     {
-        var pizza = PizzaService.Get(id);
+        var pizza = _service.GetById(id);
 
-        if (pizza == null)
+        if (pizza is null)
             return NotFound();
 
         return pizza;
@@ -31,24 +33,42 @@ public class PizzaController : ControllerBase
 
     // POST action
     [HttpPost]
-    public IActionResult Create(Pizza pizza)
+    public IActionResult Create(Pizza newPizza)
     {
-        PizzaService.Add(pizza);
+        var pizza = _service.Create(newPizza);
         return CreatedAtAction(nameof(Create), new { id = pizza.Id }, pizza);
     }
 
-    // PUT action
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, Pizza pizza)
+    [HttpPut("{id}/addtopping")]
+    public IActionResult AddTopping(int id, int toppingId)
     {
-        if (id != pizza.Id)
-            return BadRequest();
+        var pizzaToUpdate = _service.GetById(id);
 
-        var existingPizza = PizzaService.Get(id);
+        //if (pizzaToUpdate is not null)
+        //    return BadRequest();
+
+        var existingPizza = _service.GetById(id);
         if (existingPizza is null)
             return NotFound();
 
-        PizzaService.Update(pizza);
+        _service.AddTopping(id, toppingId);
+
+        return NoContent();
+    }
+
+    [HttpPut("{id}/updatesauce")]
+    public IActionResult UpdateSauce(int id, int sauceId)
+    {
+        var pizzaToUpdate = _service.GetById(id);
+
+        //if (pizzaToUpdate is not null)
+        //    return BadRequest();
+
+        var existingPizza = _service.GetById(id);
+        if (existingPizza is null)
+            return NotFound();
+
+        _service.UpdateSauce(id, sauceId);
 
         return NoContent();
     }
@@ -57,13 +77,13 @@ public class PizzaController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        var pizza = PizzaService.Get(id);
+        var pizza = _service.GetById(id);
 
         if (pizza is null)
             return NotFound();
 
-        PizzaService.Delete(id);
+        _service.DeleteById(id);
 
-        return NoContent();
+        return Ok();
     }
 }
